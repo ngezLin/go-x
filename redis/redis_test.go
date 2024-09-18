@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-redis/redismock/v9"
 	"github.com/stretchr/testify/assert"
-	cacheMock "github.com/super-saga/go-wallet-core/pkg/redis/mock"
 	"github.com/super-saga/x/log"
+	cacheMock "github.com/super-saga/x/redis/mock"
 	"go.uber.org/mock/gomock"
 )
 
