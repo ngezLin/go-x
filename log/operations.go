@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/super-saga/x/log/ctxdata"
+	"github.com/super-saga/go-x/log/ctxdata"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

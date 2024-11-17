@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/natefinch/lumberjack"
-	xsync "github.com/super-saga/x/sync"
+	xsync "github.com/super-saga/go-x/sync"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"

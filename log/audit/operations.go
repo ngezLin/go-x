@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/super-saga/x/log"
-	"github.com/super-saga/x/log/ctxdata"
+	"github.com/super-saga/go-x/log"
+	"github.com/super-saga/go-x/log/ctxdata"
 )
 
 func populateContextFields(ctx context.Context) []log.Field {

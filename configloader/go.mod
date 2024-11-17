@@ -1,4 +1,4 @@
-module github.com/super-saga/x/configloader
+module github.com/super-saga/go-x/configloader
 
 go 1.23.1
 

@@ -1,10 +1,10 @@
-module github.com/super-saga/x/log
+module github.com/super-saga/go-x/log
 
 go 1.22.6
 
 require (
 	github.com/stretchr/testify v1.9.0
-	github.com/super-saga/x/sync v0.0.0-20240918133953-3f897b481fa2
+	github.com/super-saga/go-x/sync v0.0.0-20240918133953-3f897b481fa2
 	go.uber.org/zap v1.27.0
 )
 

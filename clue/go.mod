@@ -1,4 +1,4 @@
-module github.com/super-saga/x/clue
+module github.com/super-saga/go-x/clue
 
 go 1.22.6
 

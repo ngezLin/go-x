@@ -1,4 +1,4 @@
-module github.com/super-saga/x/rate_limiter
+module github.com/super-saga/go-x/rate_limiter
 
 go 1.22.6
 

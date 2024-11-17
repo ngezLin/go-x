@@ -1,4 +1,4 @@
-module github.com/super-saga/x/rdbms
+module github.com/super-saga/go-x/rdbms
 
 go 1.22.6
 

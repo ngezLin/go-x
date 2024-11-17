@@ -1,4 +1,4 @@
-module github.com/super-saga/x/account_lock
+module github.com/super-saga/go-x/account_lock
 
 go 1.22.6
 

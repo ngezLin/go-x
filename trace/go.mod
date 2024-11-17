@@ -1,3 +1,3 @@
-module github.com/super-saga/x/trace
+module github.com/super-saga/go-x/trace
 
 go 1.22.6
