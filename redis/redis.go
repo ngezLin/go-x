@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/super-saga/x/graceful"
+	"github.com/super-saga/go-x/graceful"
 )
 
 type (
