@@ -1,4 +1,4 @@
-package httproundtripper
+package http_round_tripper
 
 import (
 	"context"
