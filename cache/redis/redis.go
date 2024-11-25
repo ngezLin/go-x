@@ -8,19 +8,11 @@ import (
 	"github.com/super-saga/go-x/graceful"
 )
 
-type (
-	Redis interface {
-		Set(ctx context.Context, key string, value interface{}, expirationTime time.Duration) error
-		Get(ctx context.Context, key string) (string, error)
-		SetIfNotExist(ctx context.Context, key string, value interface{}, expirationTime time.Duration) (bool, error)
-		DeleteIfExist(ctx context.Context, lockKey string) error
-	}
-	cache struct {
-		Client *redis.Client
-	}
-)
+type cache struct {
+	Client *redis.Client
+}
 
-func New(c *redis.Client) (Redis, graceful.ProcessStopper) {
+func New(c *redis.Client) (*cache, graceful.ProcessStopper) {
 	stopper := func(context.Context) error { return nil }
 	rc := &cache{
 		Client: c,
