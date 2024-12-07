@@ -12,6 +12,7 @@ type Options struct {
 	RemoteSecret string
 	//base64 encoded
 	RemoteKey string
+	DistintId string
 	Backoff   func() time.Duration
 	stopper   func(ctx context.Context) error
 	RemoteProvider

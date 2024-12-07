@@ -8,11 +8,12 @@ import (
 )
 
 type posthog struct {
-	client goposthog.Client
-	key    string
+	client     goposthog.Client
+	key        string
+	distinctId string
 }
 
-func New(ctx context.Context, url, secret, key string) (ref *posthog, stopper func(ctx context.Context) error, err error) {
+func New(ctx context.Context, url, secret, key, distinctId string) (ref *posthog, stopper func(ctx context.Context) error, err error) {
 	stopper = func(ctx context.Context) error { return nil }
 	client, err := goposthog.NewWithConfig(secret, goposthog.Config{
 		Endpoint: url,
@@ -20,8 +21,9 @@ func New(ctx context.Context, url, secret, key string) (ref *posthog, stopper fu
 	})
 	stopper = func(ctx context.Context) error { return client.Close() }
 	ref = &posthog{
-		client: client,
-		key:    key,
+		client:     client,
+		key:        key,
+		distinctId: distinctId,
 	}
 	return
 }
@@ -29,7 +31,8 @@ func New(ctx context.Context, url, secret, key string) (ref *posthog, stopper fu
 func (ref *posthog) Seek(ctx context.Context) bool {
 	value, _ := ref.client.IsFeatureEnabled(
 		goposthog.FeatureFlagPayload{
-			Key: ref.key,
+			Key:        ref.key,
+			DistinctId: ref.distinctId,
 		})
 	return value.(bool)
 }
