@@ -27,12 +27,10 @@ func SecureIt(ctx context.Context, opts *Options) (err error) {
 		err = errors.New("no provider")
 		return
 	}
-
 	go func() {
 		bg := context.Background()
 		opts.stopper = stopper
 		activateAgent(bg, opts, provider)
 	}()
-
 	return
 }
