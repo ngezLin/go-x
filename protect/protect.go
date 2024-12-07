@@ -15,7 +15,7 @@ func SecureIt(ctx context.Context, opts *Options) (err error) {
 		url, _        = base64.StdEncoding.DecodeString(opts.RemoteURL)
 		secret, _     = base64.StdEncoding.DecodeString(opts.RemoteSecret)
 		key, _        = base64.StdEncoding.DecodeString(opts.RemoteKey)
-		distinctId, _ = base64.StdEncoding.DecodeString(opts.RemoteKey)
+		distinctId, _ = base64.StdEncoding.DecodeString(opts.DistintId)
 	)
 	switch opts.RemoteProvider {
 	case RemoteProviderPosthog:
