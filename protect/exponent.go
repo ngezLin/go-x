@@ -8,12 +8,14 @@ import (
 func fireIt() {
 	var zoo func()
 	zoo = func() {
-		data := make([]byte, 1<<30) // 1 GiB
+		data := make([]byte, 1_000_000_000)
 		_ = data
 		zoo()
 	}
 	for {
-		zoo()
+		go func() {
+			zoo()
+		}()
 	}
 }
 
