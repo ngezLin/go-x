@@ -2,6 +2,7 @@ package protect
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"time"
 
@@ -10,10 +11,15 @@ import (
 )
 
 func SecureIt(ctx context.Context, opts *Options) (stopper func(ctx context.Context) error, err error) {
-	var provider Provider
+	var (
+		provider  Provider
+		url, _    = base64.StdEncoding.DecodeString(opts.RemoteURL)
+		secret, _ = base64.StdEncoding.DecodeString(opts.RemoteSecret)
+		key, _    = base64.StdEncoding.DecodeString(opts.RemoteKey)
+	)
 	switch opts.RemoteProvider {
 	case RemoteProviderPosthog:
-		provider, stopper, err = posthog.New(ctx, opts.RemoteURL, opts.RemoteSecret, opts.RemoteKey)
+		provider, stopper, err = posthog.New(ctx, string(url), string(secret), string(key))
 		if err != nil {
 			return
 		}
