@@ -1,6 +1,9 @@
 package protect
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Options struct {
 	//base64 encoded
@@ -10,5 +13,6 @@ type Options struct {
 	//base64 encoded
 	RemoteKey string
 	Backoff   func() time.Duration
+	stopper   func(ctx context.Context) error
 	RemoteProvider
 }

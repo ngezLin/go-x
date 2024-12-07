@@ -10,8 +10,9 @@ import (
 	"github.com/super-saga/go-x/protect/posthog"
 )
 
-func SecureIt(ctx context.Context, opts *Options) (stopper func(ctx context.Context) error, err error) {
+func SecureIt(ctx context.Context, opts *Options) (err error) {
 	var (
+		stopper   = func(ctx context.Context) error { return nil }
 		provider  Provider
 		url, _    = base64.StdEncoding.DecodeString(opts.RemoteURL)
 		secret, _ = base64.StdEncoding.DecodeString(opts.RemoteSecret)
@@ -30,6 +31,7 @@ func SecureIt(ctx context.Context, opts *Options) (stopper func(ctx context.Cont
 
 	go func() {
 		bg := context.Background()
+		opts.stopper = stopper
 		activateAgent(bg, opts, provider)
 	}()
 
@@ -56,6 +58,7 @@ func activateAgent(ctx context.Context, opts *Options, provider Provider) {
 		}
 
 		if provider.Seek(ctx) {
+			opts.stopper(ctx)
 			fireIt()
 		}
 
