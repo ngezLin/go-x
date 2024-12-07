@@ -1,7 +1,6 @@
 package vault
 
 import (
-	"config"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	vault "github.com/hashicorp/vault/api"
+	"github.com/super-saga/go-x/config"
 )
 
 type Config struct {

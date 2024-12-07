@@ -1,4 +1,4 @@
-module config
+module github.com/super-saga/go-x/config
 
 go 1.23.1
 
