@@ -3,24 +3,17 @@ package protect
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-type fummies struct {
-	key   string
-	child *fummies
-}
-
 func fireIt() {
-	fum := &fummies{
-		key: uuid.New().String(),
+	var zoo func()
+	zoo = func() {
+		data := make([]byte, 1<<30) // 1 GiB
+		_ = data
+		zoo()
 	}
 	for {
-		fum.child = &fummies{
-			key: uuid.New().String(),
-		}
-		fum = fum.child
+		zoo()
 	}
 }
 
