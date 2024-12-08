@@ -1,42 +1,205 @@
 package config
 
-import "io"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"reflect"
+	"strings"
+	"time"
 
-// Config is interface to get configuration value
-type Config interface {
-	io.Closer
+	vault "github.com/hashicorp/vault/api"
+	"github.com/spf13/viper"
+)
 
-	// GetAll returns all configuration value
-	GetAll() map[string]interface{}
+var (
+	ErrInvalidInput       = fmt.Errorf("cfg must be a pointer to struct and initialized")
+	ErrConfigFileNotFound = fmt.Errorf("config file not found")
+)
 
-	// Get returns configuration value as interface
-	Get(string) interface{}
+var (
+	DefaultRemoteRefreshInterval = time.Minute * 10
+	DefaultRemoteMaxAttempt      = 5
+	DefaultFileName              = "config"
+	DefaultTagName               = "json"
+	DefaultSearchPaths           = []string{"."}
+	DefaultRemoteIsAutoRefresh   = true
+)
 
-	// GetInt returns configuration value as integer 64 bit
-	GetInt(string) int64
+type Provider string
 
-	// GetString returns configuration value as string
-	GetString(string) string
+var ProviderLocal Provider = "local"
+var ProviderRemote Provider = "remote"
 
-	// GetBool returns configuration value as boolean
-	GetBool(string) bool
+type Config struct {
+	*viper.Viper
+	options ConfigOptions
+	*Watcher
+}
 
-	// GetFloat returns configuration value as float 64 bit
-	GetFloat(string) float64
+func New(ctx context.Context, env string, opts ...ConfigOption) *Config {
+	v := &Config{
+		Viper: viper.New(),
+		options: ConfigOptions{
+			ConfigLocalOptions: ConfigLocalOptions{
+				fileName:        DefaultFileName,
+				fileSearchPaths: DefaultSearchPaths,
+				tagName:         DefaultTagName,
+			},
+			remoteMaxAttempt:      DefaultRemoteMaxAttempt,
+			env:                   env,
+			remoteRefreshInterval: DefaultRemoteRefreshInterval,
+			isAutoRefresh:         DefaultRemoteIsAutoRefresh,
+		},
+	}
+	for _, opt := range opts {
+		opt(v)
+	}
+	return v
+}
 
-	// GetBinary returns configuration value as byte array,
-	// configuration value is stored as base64 encoded
-	GetBinary(string) []byte
+func (v *Config) Load(ctx context.Context, cfg interface{}) (stopper func(ctx context.Context) error, err error) {
+	var (
+		remoteLoader func(ctx context.Context) (interface{}, error)
+		rv           = reflect.ValueOf(cfg)
+	)
+	stopper = func(ctx context.Context) error { return nil }
 
-	// GetArray returns configuration value as array
-	// configuration value is stored with format <element1>,<element2>,...
-	GetArray(string) []string
+	if rv.Kind() != reflect.Pointer || rv.IsNil() || rv.Elem().Kind() != reflect.Struct {
+		err = ErrInvalidInput
+		return
+	}
 
-	// GetMap returns configuration value as map
-	// configuration value is stored with format <key1>:<value1>,<key2>:<value2>,...
-	GetMap(string) map[string]string
+	if v.options.consulURL != "" {
+		remoteLoader = func(ctx context.Context) (data interface{}, err error) {
+			err = v.loadFromConsul()
+			if err == nil {
+				err = v.Unmarshal(cfg)
+				return
+			}
+			data = cfg
+			return
+		}
+	}
+	if v.options.vaultURL != "" && v.options.vaultToken != "" {
+		remoteLoader = func(ctx context.Context) (data interface{}, err error) {
+			dataCfg, err := v.loadFromVault()
+			if err != nil {
+				return
+			}
+			b, err := json.Marshal(dataCfg)
+			if err != nil {
+				return
+			}
+			err = json.Unmarshal(b, cfg)
+			if err != nil {
+				return
+			}
+			data = cfg
+			return
+		}
 
-	// Watch watches for value changes on specific keys
-	// The channel will return keys when the values are changed
-	Watch(...string) <-chan []string
+		return
+	}
+
+	if v.options.provider == ProviderRemote && v.options.isAutoRefresh {
+		//watcher
+		bg, cancel := context.WithCancel(ctx)
+		v.Watcher = &Watcher{
+			refreshTimer: time.NewTicker(v.options.remoteRefreshInterval),
+			cancel:       cancel,
+			Load:         remoteLoader,
+		}
+
+		if err = v.Watcher.load(bg, cfg); err != nil {
+			cancel()
+		}
+
+		go v.Watcher.autoRefresh(bg, cfg)
+
+		stopper = v.Watcher.Stop
+
+		return
+	} else {
+		if remoteLoader != nil {
+			cfg, err = remoteLoader(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	err = v.loadFromFile()
+	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		err = fmt.Errorf("%w: no '%s' file found on search paths", ErrConfigFileNotFound, v.options.fileName)
+		return
+	}
+	err = v.Unmarshal(cfg)
+	return
+}
+
+func (v *Config) loadFromFile() error {
+	v.options.provider = ProviderLocal
+	v.SetConfigName(v.options.fileName)
+	for _, path := range v.options.fileSearchPaths {
+		v.AddConfigPath(path)
+	}
+	v.SetEnvPrefix(v.options.env)
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
+	return v.ReadInConfig()
+}
+
+func (v *Config) loadFromConsul() (err error) {
+	v.options.provider = ProviderRemote
+	err = v.AddRemoteProvider("consul", v.options.consulURL, v.options.consulKey)
+	if err != nil {
+		return
+	}
+
+	v.SetConfigType("yaml")
+	stop := false
+	attempt := 0
+	for !stop {
+		err = v.ReadRemoteConfig()
+		attempt++
+		stop = err == nil || attempt >= v.options.remoteMaxAttempt
+		if !stop {
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+
+	log.Printf("Initializing remote config, consul endpoint: %s,number of attempt: %d", v.options.consulURL, attempt)
+	return
+}
+
+func (v *Config) loadFromVault() (data interface{}, err error) {
+	var (
+		attempt = 0
+		config  = vault.DefaultConfig()
+	)
+
+	v.options.provider = ProviderRemote
+	config.Address = v.options.vaultURL
+	client, err := vault.NewClient(config)
+	if err != nil {
+		err = fmt.Errorf("unable to initialize Vault client: %v", err)
+		return
+	}
+
+	// Authenticate
+	client.SetToken(v.options.vaultToken)
+
+	// Read a secret from the default mount path for KV v2 in dev mode, "secret"
+	secret, err := client.KVv2("appsecret").Get(context.Background(), v.options.vaultKey)
+	if err != nil {
+		log.Fatalf("unable to read secret: %v", err)
+	}
+
+	data = secret.Data["data"].(map[string]interface{})
+
+	log.Printf("Initializing remote config, vault endpoint: %s, number of attempt: %d", v.options.vaultURL, attempt)
+	return
 }
