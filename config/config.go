@@ -183,6 +183,8 @@ func (v *Config) loadFromVault() (data interface{}, err error) {
 
 	v.options.provider = ProviderRemote
 	config.Address = v.options.vaultURL
+
+	// Client
 	client, err := vault.NewClient(config)
 	if err != nil {
 		err = fmt.Errorf("unable to initialize Vault client: %v", err)
@@ -193,7 +195,7 @@ func (v *Config) loadFromVault() (data interface{}, err error) {
 	client.SetToken(v.options.vaultToken)
 
 	// Read a secret from the default mount path for KV v2 in dev mode, "secret"
-	secret, err := client.KVv2("appsecret").Get(context.Background(), v.options.vaultKey)
+	secret, err := client.KVv2(v.options.vaultMountPath).Get(context.Background(), v.options.vaultSecretPath)
 	if err != nil {
 		log.Fatalf("unable to read secret: %v", err)
 	}

@@ -9,9 +9,10 @@ type (
 	}
 
 	ConfigVaultOptions struct {
-		vaultURL   string
-		vaultToken string
-		vaultKey   string
+		vaultURL        string
+		vaultToken      string
+		vaultSecretPath string
+		vaultMountPath  string
 	}
 
 	ConfigLocalOptions struct {
@@ -81,10 +82,11 @@ func WithConsul(url, key string) ConfigOption {
 	}
 }
 
-func WithVault(url, key, token string) ConfigOption {
+func WithVault(url, token, mountPath, secretPath string) ConfigOption {
 	return func(v *Config) {
 		v.options.vaultURL = url
 		v.options.vaultToken = token
-		v.options.vaultKey = key
+		v.options.vaultMountPath = mountPath
+		v.options.vaultSecretPath = secretPath
 	}
 }
