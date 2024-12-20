@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+var DEFAULT_MAX_GO = 5
+
 type (
 	saga struct {
 		wg          *sync.WaitGroup
@@ -13,15 +15,50 @@ type (
 		errHandler  func(context.Context, error)
 		queues      int
 		mux         *sync.Mutex
+		maxGo       int
 	}
 	Saga interface {
-		Done(ctx context.Context)
+		Stop()
+		Done() <-chan int
 		SetErrorHandler(ctx context.Context, handler func(context.Context, error)) *saga
 		Register(ctx context.Context, f func(context.Context) error)
 	}
 )
 
-func Begin(ctx context.Context) *saga {
+func (deps *saga) process(ctx context.Context) {
+	var (
+		wg   = sync.WaitGroup{}
+		cCtx = NewCopyContext(ctx)
+	)
+
+	for i := 0; i < deps.maxGo; i++ {
+		wg.Add(1)
+		go func() {
+			for {
+				select {
+				case revoke, ok := <-deps.chRevoke:
+					if !ok {
+						return
+					}
+					go func() {
+						defer wg.Done()
+						deps.wg.Wait()
+						err := revoke(cCtx)
+						if err != nil && deps.errHandler != nil {
+							deps.errHandler(cCtx, err)
+						}
+					}()
+				case <-ctx.Done():
+					close(deps.chRevoke)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+}
+
+func Begin(ctx context.Context, opts ...Option) *saga {
 	var (
 		deps = &saga{
 			wg:          &sync.WaitGroup{},
@@ -29,35 +66,23 @@ func Begin(ctx context.Context) *saga {
 			chCompleted: make(chan int),
 			mux:         &sync.Mutex{},
 			queues:      0,
+			maxGo:       DEFAULT_MAX_GO,
 		}
 	)
 
+	for _, opt := range opts {
+		opt(deps)
+	}
+
 	go func() {
-		for {
-			select {
-			case revoke, ok := <-deps.chRevoke:
-				if !ok {
-					return
-				}
-				go func() {
-					cCtx := NewCopyContext(ctx)
-					deps.wg.Wait()
-					err := revoke(cCtx)
-					if err != nil && deps.errHandler != nil {
-						deps.errHandler(cCtx, err)
-					}
-				}()
-			case <-ctx.Done():
-				close(deps.chRevoke)
-				return
-			}
-		}
+		deps.process(ctx)
+		deps.chCompleted <- 1
 	}()
 
 	return deps
 }
 
-func (dep *saga) Done() {
+func (dep *saga) Done() <-chan int {
 	close(dep.chRevoke)
 	dep.mux.Lock()
 	defer dep.mux.Unlock()
@@ -65,6 +90,7 @@ func (dep *saga) Done() {
 		dep.wg.Done()
 		dep.queues--
 	}
+	return dep.chCompleted
 }
 
 func (dep *saga) SetErrorHandler(ctx context.Context, f func(context.Context, error)) *saga {
@@ -79,4 +105,9 @@ func (dep *saga) Register(ctx context.Context, f func(context.Context) error) {
 
 	dep.queues++
 	dep.chRevoke <- f
+}
+
+func (dep *saga) Stop() {
+
+	close(dep.chCompleted)
 }

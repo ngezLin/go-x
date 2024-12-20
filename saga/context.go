@@ -54,6 +54,13 @@ func DoneContext(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	deps.Done()
+	go func() {
+		defer deps.Stop()
+		<-deps.Done()
+	}()
 	return nil
+}
+func DoneContextSync(ctx context.Context) <-chan int {
+	deps, _ := collectSaga(ctx)
+	return deps.Done()
 }
