@@ -48,3 +48,12 @@ func SetErrorHandlerContext(ctx context.Context, f func(context.Context, error))
 	ctx = setSaga(ctx, deps)
 	return ctx, err
 }
+
+func DoneContext(ctx context.Context) error {
+	deps, err := collectSaga(ctx)
+	if err != nil {
+		return err
+	}
+	deps.Done()
+	return nil
+}
