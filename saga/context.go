@@ -3,7 +3,6 @@ package saga
 import (
 	"context"
 	"errors"
-	"sync"
 )
 
 type sagaCtxKey struct{}
@@ -25,31 +24,7 @@ func setSaga(ctx context.Context, deps *saga) context.Context {
 }
 
 func BeginContext(ctx context.Context) (*saga, context.Context) {
-	var (
-		deps = &saga{
-			wg:       &sync.WaitGroup{},
-			chRevoke: make(chan func(context.Context) error),
-		}
-	)
-
-	go func(ctx context.Context) {
-		select {
-		case <-ctx.Done():
-			close(deps.chRevoke)
-		case revoke := <-deps.chRevoke:
-			deps.wg.Add(1)
-			//running revokers
-			go func() {
-				err := revoke(ctx)
-				if err != nil {
-					if deps.errHandler != nil {
-						deps.errHandler(ctx, err)
-					}
-				}
-			}()
-		}
-	}(ctx)
-
+	deps := Begin(ctx)
 	ctx = context.WithValue(ctx, SagaKey, deps)
 	return deps, ctx
 }
