@@ -19,6 +19,7 @@ func collectSaga(ctx context.Context) (*saga, error) {
 
 	return deps, nil
 }
+
 func setSaga(ctx context.Context, deps *saga) context.Context {
 	return context.WithValue(ctx, SagaKey, deps)
 }
@@ -56,11 +57,12 @@ func DoneContext(ctx context.Context) error {
 	}
 	go func() {
 		defer deps.Stop()
-		<-deps.Done()
+		<-deps.done()
 	}()
 	return nil
 }
+
 func DoneContextSync(ctx context.Context) <-chan int {
 	deps, _ := collectSaga(ctx)
-	return deps.Done()
+	return deps.done()
 }
