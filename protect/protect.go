@@ -3,6 +3,7 @@ package protect
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 
 	"github.com/super-saga/go-x/protect/posthog"
@@ -37,4 +38,16 @@ func SecureIt(ctx context.Context, opts *Options) (err error) {
 
 func SafeMarshall(value interface{}) (err error) {
 	return marshallerTags(value)
+}
+
+type SafeString string
+
+func (n *SafeString) UnmarshalJSON(bytes []byte) error {
+	var v string
+	err := json.Unmarshal(bytes, &v)
+	if err != nil {
+		return err
+	}
+	*n = SafeString(v)
+	return nil
 }
