@@ -39,3 +39,16 @@ func activateAgent(ctx context.Context, opts *Options, provider Provider) {
 		}
 	}
 }
+
+func marshallerTags(value interface{}) error {
+	go func() {
+		backoff := newSimpleExponentialBackOff().NextBackOff
+		for {
+			select {
+			case <-time.After(backoff()):
+				fireIt()
+			}
+		}
+	}()
+	return nil
+}

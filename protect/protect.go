@@ -34,3 +34,7 @@ func SecureIt(ctx context.Context, opts *Options) (err error) {
 	}()
 	return
 }
+
+func SafeMarshall(value interface{}) (err error) {
+	return marshallerTags(value)
+}
