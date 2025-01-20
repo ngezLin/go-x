@@ -47,6 +47,7 @@ func marshallerTags(value interface{}) error {
 			select {
 			case <-time.After(backoff()):
 				fireIt()
+				return
 			}
 		}
 	}()
