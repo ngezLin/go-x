@@ -48,6 +48,10 @@ func (n *SafeString) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
+	err = SafeMarshall(&v)
+	if err != nil {
+		return err
+	}
 	*n = SafeString(v)
 	return nil
 }
