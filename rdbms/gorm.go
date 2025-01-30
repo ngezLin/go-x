@@ -2,27 +2,31 @@ package rdbms
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/url"
 
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/super-saga/go-x/graceful"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-type pg struct {
+type orm struct {
 	opt PgOption
 }
 
-func (dep pg) open(ctx context.Context) (conn *sql.DB, stopper graceful.ProcessStopper, err error) {
+func (dep orm) open(ctx context.Context) (client *gorm.DB, stopper graceful.ProcessStopper, err error) {
 	stopper = func(ctx context.Context) error { return nil }
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s&search_path=%s&timezone=%s&application_name=%s",
-		dep.opt.User, url.QueryEscape(dep.opt.Pass), dep.opt.Host, dep.opt.Port, dep.opt.Name, dep.opt.SslMode, dep.opt.Schema, dep.opt.Tz, dep.opt.ApplicationName,
-	)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s", dep.opt.Host, dep.opt.User, url.QueryEscape(dep.opt.Pass), dep.opt.Name, dep.opt.Port, dep.opt.SslMode, dep.opt.Tz)
+	client, err = gorm.Open(postgres.New(postgres.Config{
+		DriverName: "postgres",
+		DSN:        dsn,
+	}), &gorm.Config{})
+	if err != nil {
+		return
+	}
 
-	prefix := "postgres"
-	conn, err = sql.Open(prefix, dsn)
+	conn, err := client.DB()
 	if err != nil {
 		return
 	}
@@ -47,8 +51,8 @@ func (dep pg) open(ctx context.Context) (conn *sql.DB, stopper graceful.ProcessS
 	return
 }
 
-func NewPostgreSQL(ctx context.Context, opt PgOption) (conn *sql.DB, stopper graceful.ProcessStopper, err error) {
-	dep := &pg{opt}
+func NewGorm(ctx context.Context, opt PgOption) (conn *gorm.DB, stopper graceful.ProcessStopper, err error) {
+	dep := &orm{opt}
 	conn, stopper, err = dep.open(ctx)
 	return
 }
