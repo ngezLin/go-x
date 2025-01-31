@@ -30,8 +30,9 @@ type (
 func NewSubscriber(ctx context.Context, subscriberConfig dtask.SubcriberConfig) (*subcriber, graceful.ProcessStopper, error) {
 	p := &subcriber{
 		redisOption: asynq.RedisClientOpt{
-			Addr: subscriberConfig.Redis.Address,
-			DB:   subscriberConfig.Redis.DB,
+			Addr:     subscriberConfig.Redis.Address,
+			DB:       subscriberConfig.Redis.DB,
+			Password: subscriberConfig.Redis.Password,
 		},
 		cfg: asynq.Config{
 			RetryDelayFunc: func(n int, e error, t *asynq.Task) time.Duration {

@@ -28,8 +28,9 @@ type (
 		MetricsRegistry prometheus.Registerer
 	}
 	Redis struct {
-		Address string `json:"address"`
-		DB      int    `json:"db"`
+		Address  string `json:"address"`
+		DB       int    `json:"db"`
+		Password string `json:"password"`
 	}
 )
 
