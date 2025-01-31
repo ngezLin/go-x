@@ -3,7 +3,7 @@ package middleware
 import (
 	"time"
 
-	xlog "bitbucket.org/Amartha/go-x/log"
+	xlog "github.com/super-saga/go-x/log"
 	"github.com/super-saga/go-x/messaging"
 	"github.com/super-saga/go-x/messaging/kafka"
 )

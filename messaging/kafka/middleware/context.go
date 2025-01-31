@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"bitbucket.org/Amartha/go-x/log/ctxdata"
 	"github.com/google/uuid"
+	"github.com/super-saga/go-x/ctxval"
 	"github.com/super-saga/go-x/messaging"
 	"github.com/super-saga/go-x/messaging/kafka"
 )
@@ -51,16 +51,16 @@ func Context(next messaging.SubscriptionHandler) messaging.SubscriptionHandler {
 			traceID, spanID, traceSampled = processTraceParent(traceparent)
 		}
 
-		ctx := ctxdata.Sets(
+		ctx := ctxval.Sets(
 			message.Context(),
-			ctxdata.SetCorrelationId(correlationId),
-			ctxdata.SetTraceParent(traceparent),
-			ctxdata.SetTraceID(traceID),
-			ctxdata.SetSpanID(spanID),
-			ctxdata.SetTraceSampled(traceSampled),
+			ctxval.SetCorrelationId(correlationId),
+			ctxval.SetTraceParent(traceparent),
+			ctxval.SetTraceID(traceID),
+			ctxval.SetSpanID(spanID),
+			ctxval.SetTraceSampled(traceSampled),
 
-			ctxdata.SetUserAgent(userAgent),
-			ctxdata.SetPid(pid),
+			ctxval.SetUserAgent(userAgent),
+			ctxval.SetPid(pid),
 		)
 
 		return next(message.WithContext(ctx))
