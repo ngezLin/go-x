@@ -1,8 +1,9 @@
-package metric
+package metrics
 
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,8 +15,6 @@ type (
 		ApiRequestDurationHist *prometheus.HistogramVec
 		CountRequest           *prometheus.CounterVec
 		InFlightGaugeVec       *prometheus.GaugeVec
-		DnsLatencyVec          *prometheus.HistogramVec
-		TlsLatencyVec          *prometheus.HistogramVec
 		HistVec                *prometheus.HistogramVec
 	}
 )
@@ -45,32 +44,6 @@ func NewHttpClientCollector(ctx context.Context, reg prometheus.Registerer) *Htt
 		[]string{"service", "endpoint"},
 	)
 
-	// dnsLatencyVec uses custom buckets based on expected dns durations.
-	// It has an instance label "event", which is set in the
-	// DNSStart and DNSDonehook functions defined in the
-	// InstrumentTrace struct below.
-	dnsLatencyVec := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "dns_duration_seconds",
-			Help:    "Trace dns latency histogram.",
-			Buckets: []float64{.005, .01, .025, .05},
-		},
-		[]string{"event"},
-	)
-
-	// tlsLatencyVec uses custom buckets based on expected tls durations.
-	// It has an instance label "event", which is set in the
-	// TLSHandshakeStart and TLSHandshakeDone hook functions defined in the
-	// InstrumentTrace struct below.
-	tlsLatencyVec := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "tls_duration_seconds",
-			Help:    "Trace tls latency histogram.",
-			Buckets: []float64{.05, .1, .25, .5},
-		},
-		[]string{"event"},
-	)
-
 	// histVec has no labels, making it a zero-dimensional ObserverVec.
 	histVec := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -81,7 +54,7 @@ func NewHttpClientCollector(ctx context.Context, reg prometheus.Registerer) *Htt
 		[]string{},
 	)
 
-	for _, c := range []prometheus.Collector{countRequest, apiRequestDurationHist, tlsLatencyVec, dnsLatencyVec, histVec, inFlightGaugeVec} {
+	for _, c := range []prometheus.Collector{countRequest, apiRequestDurationHist, histVec, inFlightGaugeVec} {
 		reg.MustRegister(c)
 	}
 
@@ -90,19 +63,33 @@ func NewHttpClientCollector(ctx context.Context, reg prometheus.Registerer) *Htt
 		ApiRequestDurationHist: apiRequestDurationHist,
 		CountRequest:           countRequest,
 		InFlightGaugeVec:       inFlightGaugeVec,
-		DnsLatencyVec:          dnsLatencyVec,
-		TlsLatencyVec:          tlsLatencyVec,
 		HistVec:                histVec,
 	}
 }
 
 func (m *HttpClientCollector) Record(duration time.Duration, service, method, endpoint string, statusCode int) {
-	m.ApiRequestDurationHist.WithLabelValues(service, method, endpoint, fmt.Sprint(statusCode)).
-		Observe(duration.Seconds())
-	m.CountRequest.WithLabelValues(service, method, endpoint, fmt.Sprint(statusCode)).Inc()
-	m.InFlightGaugeVec.WithLabelValues(service, endpoint).Dec()
+	URL, _ := url.Parse(endpoint)
+	if URL != nil {
+		endpoint = fmt.Sprintf("%s://%s%s", URL.Scheme, URL.Host, URL.Path)
+	}
+	if m.ApiRequestDurationHist != nil {
+		m.ApiRequestDurationHist.WithLabelValues(service, method, endpoint, fmt.Sprint(statusCode)).
+			Observe(duration.Seconds())
+	}
+	if m.CountRequest != nil {
+		m.CountRequest.WithLabelValues(service, method, endpoint, fmt.Sprint(statusCode)).Inc()
+	}
+	if m.InFlightGaugeVec != nil {
+		m.InFlightGaugeVec.WithLabelValues(service, endpoint).Dec()
+	}
 }
 
 func (m *HttpClientCollector) RecordGauge(service, endpoint string) {
-	m.InFlightGaugeVec.WithLabelValues(service, endpoint).Inc()
+	if m.InFlightGaugeVec != nil {
+		URL, _ := url.Parse(endpoint)
+		if URL != nil {
+			endpoint = fmt.Sprintf("%s://%s%s", URL.Scheme, URL.Host, URL.Path)
+		}
+		m.InFlightGaugeVec.WithLabelValues(service, endpoint).Inc()
+	}
 }
