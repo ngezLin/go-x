@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/super-saga/go-x/graceful"
 	"github.com/super-saga/go-x/messaging"
 
 	"github.com/IBM/sarama"
@@ -22,7 +23,8 @@ type publisher struct {
 // This struct is implement several interface in messaging package.
 // You may specify the opts by passing messaging.WithOrigin("yourservicename")
 // to automatically add origin in your header.
-func NewPublisher(brokers []string, opts ...PublisherOption) (pub *publisher, err error) {
+func NewPublisher(brokers []string, opts ...PublisherOption) (pub *publisher, stopper graceful.ProcessStopper, err error) {
+	stopper = func(context.Context) error { return nil }
 	pub = new(publisher)
 	opts = append(defaultPublisherOptions, opts...)
 	popt := newPublisherOption()
@@ -30,7 +32,8 @@ func NewPublisher(brokers []string, opts ...PublisherOption) (pub *publisher, er
 
 	producer, err := sarama.NewAsyncProducer(brokers, popt.saramaCfg)
 	if err != nil {
-		return pub, fmt.Errorf("error creating sarama producer: %w", err)
+		err = fmt.Errorf("error creating sarama producer: %w", err)
+		return
 	}
 
 	pub.producer = producer
@@ -43,6 +46,10 @@ func NewPublisher(brokers []string, opts ...PublisherOption) (pub *publisher, er
 	}
 
 	pub.run()
+
+	stopper = func(ctx context.Context) error {
+		return pub.ClosePublisher()
+	}
 
 	return
 }
