@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	xlog "github.com/super-saga/go-x/log"
 )
 
 // DefaultRetriesOptions will be retryable for serializable isolation level error only
@@ -29,7 +31,7 @@ var DefaultIsRetryable = alwaysRetryable
 // original panic. If the rollback caused by an error also receives an error, a RollbackErr will be returned. If the
 // rollback caused by a panic returns an error, the error message and original panic merged and propagated as a new
 // panic.
-func Transact(ctx context.Context, conn *sql.DB, operation func(ctx context.Context) error) (err error) {
+func Transact(ctx context.Context, conn Database, operation func(ctx context.Context) error) (err error) {
 	return TransactWithOptions(ctx, conn, nil, operation)
 }
 
@@ -41,22 +43,42 @@ func Transact(ctx context.Context, conn *sql.DB, operation func(ctx context.Cont
 //
 // The provided TxOptions is optional and may be nil if defaults should be used. If a non-default isolation level is
 // used that the driver doesn't support, an error will be returned.
-func TransactWithOptions(ctx context.Context, conn *sql.DB, txOpts *sql.TxOptions, operation func(ctx context.Context) error) (err error) {
-	tx, err := conn.BeginTx(ctx, txOpts)
+func TransactWithOptions(ctx context.Context, conn Database, txOpts *sql.TxOptions, operation func(ctx context.Context) error) (err error) {
+	var (
+		child bool = true
+		tx    Tx
+	)
+	_, err = GetTransaction(ctx)
 	if err != nil {
-		return err
+		tx, err = conn.BeginTx(ctx, txOpts)
+		if err != nil {
+			return err
+		}
+		ctx = SetTransaction(ctx, tx)
+		child = false
 	}
-	ctx = SetTransaction(ctx, tx)
+
+	if child {
+		xlog.Info(ctx, "[DATABASE.TRANSACTION.PUSH.CHILD]")
+	} else {
+		xlog.Info(ctx, "[DATABASE.TRANSACTION.BEGIN]")
+	}
+
 	defer func() {
-		if GetTransactionDefiner(ctx) == GetCaller() {
+		if !child {
 			if p := recover(); p != nil {
-				err = fmt.Errorf("panic happened because: " + fmt.Sprintf("%v", p))
 				tx.Rollback()
+				err = fmt.Errorf("panic happened because: " + fmt.Sprintf("%v", p))
+				xlog.Panic(ctx, "[DATABASE.TRANSACTION.PANIC]", xlog.Err(err))
 			} else if err != nil {
 				tx.Rollback()
+				xlog.Warn(ctx, "[DATABASE.TRANSACTION.ROLLBACK]", xlog.Err(err))
 			} else {
 				err = tx.Commit()
+				xlog.Info(ctx, "[DATABASE.TRANSACTION.COMMIT]")
 			}
+		} else {
+			xlog.Info(ctx, "[DATABASE.TRANSACTION.POP.CHILD]")
 		}
 	}()
 	err = operation(ctx)
