@@ -14,6 +14,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/lib/pq v1.1.1 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/super-saga/go-x/sync v0.0.0-20241123160015-777159dfceca // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
