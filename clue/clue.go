@@ -1,5 +1,7 @@
 package clue
 
+import "net/http"
+
 type Clue struct {
 	HttpCode int         `json:"-"`
 	Data     interface{} `json:"-"`
@@ -14,6 +16,10 @@ type Builder interface {
 
 type builder struct {
 	sender
+}
+
+func (b *builder) Error() string {
+	return b.clue.Meta.GetMessage()
 }
 
 // SnapBI implements Builder.
@@ -40,5 +46,15 @@ func Build(httpCode int, code string, data interface{}, message string) Builder 
 				Data: data,
 			},
 		},
+	}
+}
+
+func CoverBuilder(err error, data interface{}) Builder {
+	re, ok := err.(*builder)
+	if ok {
+		re.clue.Data = data
+		return re
+	} else {
+		return Build(http.StatusInternalServerError, "00", data, err.Error())
 	}
 }
