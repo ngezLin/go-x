@@ -10,6 +10,7 @@ import (
 type std struct {
 	Code    string `json:"responseCode"`
 	Message string `json:"responseMessage"`
+	*Clue
 }
 
 // GetCode implements Meta.
@@ -51,9 +52,9 @@ func (s *std) Templating(ctx context.Context, clue *Clue) *Clue {
 }
 
 // Marshal implements Meta.
-func (s *std) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
+func (s *std) MarshalJSON() ([]byte, error) {
 	type tmp Clue
-	g := tmp(*clue)
+	g := tmp(*s.Clue)
 	first, err := json.Marshal(g)
 	if err != nil {
 		return nil, err
@@ -63,8 +64,8 @@ func (s *std) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if clue.Meta != nil {
-		second, err := json.Marshal(clue.Meta)
+	if s.Clue.Meta != nil {
+		second, err := json.Marshal(s.Clue.Meta)
 		if err != nil {
 			return nil, err
 		}
@@ -74,9 +75,9 @@ func (s *std) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
 		}
 	}
 	data["data"] = nil
-	if clue.Data != nil {
+	if s.Clue.Data != nil {
 		var fieldData interface{}
-		d, err := json.Marshal(clue.Data)
+		d, err := json.Marshal(s.Clue.Data)
 		if err != nil {
 			return nil, err
 		}

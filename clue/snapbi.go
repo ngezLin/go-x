@@ -10,6 +10,7 @@ import (
 type snap struct {
 	Code    string `json:"responseCode"`
 	Message string `json:"responseMessage"`
+	*Clue
 }
 
 // GetCode implements Meta.
@@ -56,9 +57,9 @@ func (s *snap) Templating(ctx context.Context, clue *Clue) *Clue {
 }
 
 // Marshal implements Meta.
-func (s *snap) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
+func (s *snap) MarshalJSON() ([]byte, error) {
 	type tmp Clue
-	g := tmp(*clue)
+	g := tmp(*s.Clue)
 	first, err := json.Marshal(g)
 	if err != nil {
 		return nil, err
@@ -68,8 +69,8 @@ func (s *snap) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if clue.Meta != nil {
-		second, err := json.Marshal(clue.Meta)
+	if s.Clue.Meta != nil {
+		second, err := json.Marshal(s.Clue.Meta)
 		if err != nil {
 			return nil, err
 		}
@@ -78,8 +79,8 @@ func (s *snap) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
 			return nil, err
 		}
 	}
-	if clue.Data != nil {
-		second, err := json.Marshal(clue.Data)
+	if s.Clue.Data != nil {
+		second, err := json.Marshal(s.Clue.Data)
 		if err != nil {
 			return nil, err
 		}
