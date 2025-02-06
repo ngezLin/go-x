@@ -56,7 +56,7 @@ func (s *snap) Templating(ctx context.Context, clue *Clue) *Clue {
 }
 
 // Marshal implements Meta.
-func (s *snap) Marshal(ctx context.Context, clue *Clue) ([]byte, error) {
+func (s *snap) MarshalJSON(ctx context.Context, clue *Clue) ([]byte, error) {
 	type tmp Clue
 	g := tmp(*clue)
 	first, err := json.Marshal(g)
@@ -78,8 +78,8 @@ func (s *snap) Marshal(ctx context.Context, clue *Clue) ([]byte, error) {
 			return nil, err
 		}
 	}
-	if clue.Meta != nil {
-		second, err := json.Marshal(clue.Meta)
+	if clue.Data != nil {
+		second, err := json.Marshal(clue.Data)
 		if err != nil {
 			return nil, err
 		}
