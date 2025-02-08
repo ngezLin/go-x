@@ -57,7 +57,7 @@ func (s *snap) Templating(ctx context.Context, clue *Clue) *Clue {
 }
 
 // Marshal implements Meta.
-func (s *snap) MarshalJSON(cl *Clue) ([]byte, error) {
+func (s *snap) Marshall(cl *Clue) ([]byte, error) {
 	type tmp Clue
 	g := tmp(*cl)
 	first, err := json.Marshal(g)
