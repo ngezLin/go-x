@@ -11,6 +11,8 @@ type Clue struct {
 type Builder interface {
 	Std() Builder
 	SnapBI() Builder
+	Error() string
+	MarshalJSON() ([]byte, error)
 	Sender
 }
 

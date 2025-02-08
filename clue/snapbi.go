@@ -10,7 +10,12 @@ import (
 type snap struct {
 	Code    string `json:"responseCode"`
 	Message string `json:"responseMessage"`
-	*Clue
+	Info    *Info  `json:"-"`
+}
+
+// SetInfo implements Meta.
+func (s *snap) SetInfo(v *Info) {
+	s.Info = v
 }
 
 // GetCode implements Meta.
@@ -19,8 +24,8 @@ func (s *snap) GetCode() string {
 }
 
 // GetInfo implements Meta.
-func (s *snap) GetInfo() interface{} {
-	return nil
+func (s *snap) GetInfo() *Info {
+	return s.Info
 }
 
 // GetMessage implements Meta.
@@ -58,19 +63,9 @@ func (s *snap) Templating(ctx context.Context, clue *Clue) *Clue {
 
 // Marshal implements Meta.
 func (s *snap) Marshall(cl *Clue) ([]byte, error) {
-	type tmp Clue
-	g := tmp(*cl)
-	first, err := json.Marshal(g)
-	if err != nil {
-		return nil, err
-	}
 	data := make(map[string]interface{})
-	err = json.Unmarshal(first, &data)
-	if err != nil {
-		return nil, err
-	}
-	if g.Meta != nil {
-		second, err := json.Marshal(g.Meta)
+	if cl.Meta != nil {
+		second, err := json.Marshal(cl.Meta)
 		if err != nil {
 			return nil, err
 		}
@@ -79,8 +74,8 @@ func (s *snap) Marshall(cl *Clue) ([]byte, error) {
 			return nil, err
 		}
 	}
-	if g.Data != nil {
-		second, err := json.Marshal(g.Data)
+	if cl.Data != nil {
+		second, err := json.Marshal(cl.Data)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +94,7 @@ func (s *snap) SetCode(v string) {
 
 // SetMessage implements Meta.
 func (s *snap) SetMessage(v string) {
-	s.Code = v
+	s.Message = v
 }
 
 func MewSnapBI(code, message string) Meta {
@@ -109,15 +104,15 @@ func MewSnapBI(code, message string) Meta {
 	}
 }
 
-const serviceCode = "snap-service-code"
+type snapSC struct{}
 
 func DefineCtxServiceCode(ctx context.Context, code string) context.Context {
-	ctx = context.WithValue(ctx, serviceCode, code)
+	ctx = context.WithValue(ctx, snapSC{}, code)
 	return ctx
 }
 
 func GetCtxServiceCode(ctx context.Context) string {
-	v, ok := ctx.Value(serviceCode).(string)
+	v, ok := ctx.Value(snapSC{}).(string)
 	if !ok {
 		return ""
 	}

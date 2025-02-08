@@ -3,13 +3,29 @@ package clue
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
+type (
+	Pagination struct {
+		Page  int `query:"page" json:"page" bson:"page"`
+		Limit int `query:"limit" json:"limit" bson:"limit"`
+	}
+	Info struct {
+		Count     int64 `json:"count" bson:"count"`
+		TotalPage int64 `json:"total_page" bson:"total_page"`
+	}
+)
+
 type std struct {
-	Code    string `json:"responseCode"`
-	Message string `json:"responseMessage"`
+	Code    string `json:"status"`
+	Message string `json:"message"`
+	Info    *Info  `json:"info,omitempty"`
+}
+
+// SetInfo implements Meta.
+func (s *std) SetInfo(v *Info) {
+	s.Info = v
 }
 
 // GetCode implements Meta.
@@ -18,8 +34,8 @@ func (s *std) GetCode() string {
 }
 
 // GetInfo implements Meta.
-func (s *std) GetInfo() interface{} {
-	return nil
+func (s *std) GetInfo() *Info {
+	return s.Info
 }
 
 // GetMessage implements Meta.
@@ -31,40 +47,27 @@ func (s *std) GetMessage() string {
 func (s *std) Templating(ctx context.Context, clue *Clue) *Clue {
 	//modified code
 	var (
-		code    int    = clue.HttpCode
-		casee   string = clue.Meta.GetCode()
+		code    string = clue.Meta.GetCode()
 		message string = clue.Meta.GetMessage()
+		info    *Info  = clue.Meta.GetInfo()
 	)
 
-	if casee == "" {
-		casee = "00"
-	}
-
-	if message == "" && code == http.StatusOK {
+	if message == "" && clue.HttpCode == http.StatusOK {
 		message = "Successful"
 	}
 
-	clue.Meta.SetCode(fmt.Sprintf("%d%s", code, casee))
+	clue.Meta.SetCode(code)
 	clue.Meta.SetMessage(message)
+	clue.Meta.SetInfo(info)
 
 	return clue
 }
 
 // Marshal implements Meta.
 func (s *std) Marshall(cl *Clue) ([]byte, error) {
-	type tmp Clue
-	g := tmp(*cl)
-	first, err := json.Marshal(g)
-	if err != nil {
-		return nil, err
-	}
 	data := make(map[string]interface{})
-	err = json.Unmarshal(first, &data)
-	if err != nil {
-		return nil, err
-	}
-	if g.Meta != nil {
-		second, err := json.Marshal(g.Meta)
+	if cl.Meta != nil {
+		second, err := json.Marshal(cl.Meta)
 		if err != nil {
 			return nil, err
 		}
@@ -74,9 +77,9 @@ func (s *std) Marshall(cl *Clue) ([]byte, error) {
 		}
 	}
 	data["data"] = nil
-	if g.Data != nil {
+	if cl.Data != nil {
 		var fieldData interface{}
-		d, err := json.Marshal(g.Data)
+		d, err := json.Marshal(cl.Data)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +99,7 @@ func (s *std) SetCode(v string) {
 
 // SetMessage implements Meta.
 func (s *std) SetMessage(v string) {
-	s.Code = v
+	s.Message = v
 }
 
 func MewStd(code, message string) Meta {

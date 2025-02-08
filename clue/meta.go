@@ -7,7 +7,8 @@ type Meta interface {
 	SetMessage(string)
 	SetCode(string)
 	GetCode() string
-	GetInfo() interface{}
+	GetInfo() *Info
+	SetInfo(*Info)
 	Templating(ctx context.Context, clue *Clue) *Clue
 	Marshall(clue *Clue) ([]byte, error)
 }
