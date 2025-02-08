@@ -34,6 +34,10 @@ func (b *builder) Std() Builder {
 	return b
 }
 
+func (b *builder) MarshalJSON() ([]byte, error) {
+	return b.clue.Meta.MarshalJSON(b.clue)
+}
+
 func Build(httpCode int, code string, data interface{}, message string) Builder {
 	return &builder{
 		sender: sender{

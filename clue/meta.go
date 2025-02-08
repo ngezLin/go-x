@@ -9,5 +9,5 @@ type Meta interface {
 	GetCode() string
 	GetInfo() interface{}
 	Templating(ctx context.Context, clue *Clue) *Clue
-	MarshalJSON() ([]byte, error)
+	MarshalJSON(clue *Clue) ([]byte, error)
 }
