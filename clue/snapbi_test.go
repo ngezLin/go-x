@@ -3,7 +3,6 @@ package clue
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -74,8 +73,6 @@ func TestSnapBIMarshall(t *testing.T) {
 
 	snapInstance := &snap{Code: "200", Message: "Success"}
 	jsonData, err := snapInstance.Marshall(clue)
-
-	fmt.Println(string(jsonData))
 
 	assert.NoError(t, err, "Expected no error during JSON marshaling")
 

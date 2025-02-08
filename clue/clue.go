@@ -8,11 +8,14 @@ type Clue struct {
 	Meta     Meta        `json:"-"`
 }
 
+func (c Clue) MarshalJSON() ([]byte, error) {
+	return c.Meta.Marshall(&c)
+}
+
 type Builder interface {
 	Std() Builder
 	SnapBI() Builder
 	Error() string
-	MarshalJSON() ([]byte, error)
 	Sender
 }
 
@@ -34,10 +37,6 @@ func (b *builder) SnapBI() Builder {
 func (b *builder) Std() Builder {
 	b.clue.Meta = MewStd(b.clue.Meta.GetCode(), b.clue.Meta.GetMessage())
 	return b
-}
-
-func (b *builder) MarshalJSON() ([]byte, error) {
-	return b.clue.Meta.Marshall(b.clue)
 }
 
 func Build(httpCode int, code string, data interface{}, message string) Builder {

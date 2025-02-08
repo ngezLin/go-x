@@ -3,7 +3,6 @@ package clue
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -73,8 +72,6 @@ func TestStdMarshall(t *testing.T) {
 
 	stdInstance := &std{Code: "200", Message: "Success"}
 	jsonData, err := stdInstance.Marshall(clue)
-
-	fmt.Println(string(jsonData))
 
 	assert.NoError(t, err, "Expected no error during JSON marshaling")
 

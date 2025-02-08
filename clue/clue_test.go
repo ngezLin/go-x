@@ -52,14 +52,14 @@ func TestMarshalJSON(t *testing.T) {
 	data := map[string]interface{}{"key": "value"}
 	b := Build(http.StatusOK, "200", data, "Success")
 
-	jsonData, err := b.MarshalJSON()
+	jsonData, err := b.(*builder).clue.MarshalJSON()
 	assert.NoError(t, err, "Expected no error during JSON marshaling")
 	fmt.Println(string(jsonData))
 	var result map[string]interface{}
 	err = json.Unmarshal(jsonData, &result)
 	assert.NoError(t, err, "Expected valid JSON output")
-	assert.Equal(t, "200", result["responseCode"], "Expected responseCode to be '200'")
-	assert.Equal(t, "Success", result["responseMessage"], "Expected responseMessage to be 'Success'")
+	assert.Equal(t, "200", result["status"], "Expected responseCode to be '200'")
+	assert.Equal(t, "Success", result["message"], "Expected responseMessage to be 'Success'")
 	assert.Equal(t, data, result["data"], "Expected data to match the input")
 }
 
