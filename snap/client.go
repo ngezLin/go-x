@@ -24,9 +24,7 @@ import (
 
 type (
 	client struct {
-		PrivateKey string
-		ClientKey  string
-		Secret     string
+		*ClientOption
 	}
 
 	HttpRequestConfig struct {
@@ -40,34 +38,40 @@ type (
 	}
 )
 
-func NewClient(ctx context.Context) Client {
+type (
+	ClientOption struct {
+		PrivateKey string
+		ClientKey  string
+		Secret     string
+	}
+)
+
+func NewClient(opt *ClientOption) Client {
 	return &client{
-		PrivateKey: "private_key",
-		ClientKey:  "client_key",
-		Secret:     "secret",
+		opt,
 	}
 }
 
-func (c *client) exportPEMStrToPrivKey(priv []byte) *rsa.PrivateKey {
+func (dep *client) exportPEMStrToPrivKey(priv []byte) *rsa.PrivateKey {
 	block, _ := pem.Decode(priv)
 	key, _ := x509.ParsePKCS1PrivateKey(block.Bytes)
 	return key
 }
 
-func (c *client) generateRSAPrivateKey(ctx context.Context, key string) (privKey *rsa.PrivateKey, err error) {
+func (dep *client) generateRSAPrivateKey(ctx context.Context, key string) (privKey *rsa.PrivateKey, err error) {
 	decodePrivKey, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		return privKey, errors.New("decode failed")
 	}
-	privKey = c.exportPEMStrToPrivKey(decodePrivKey)
+	privKey = dep.exportPEMStrToPrivKey(decodePrivKey)
 	return
 }
 
 // generateSign is a helper function to handle common signature generation logic
-func (c *client) generateSign(ctx context.Context, message string) (signatureStr string, err error) {
+func (dep *client) generateSign(ctx context.Context, message string) (signatureStr string, err error) {
 	msgHAsh := sha256.Sum256([]byte(message))
 
-	privKeyFile, err := c.generateRSAPrivateKey(ctx, c.PrivateKey)
+	privKeyFile, err := dep.generateRSAPrivateKey(ctx, dep.PrivateKey)
 	if err != nil {
 		return
 	}
@@ -82,7 +86,7 @@ func (c *client) generateSign(ctx context.Context, message string) (signatureStr
 }
 
 // PrepareSignAsymmetric implements Client.
-func (c *client) PrepareSignAsymmetric(ctx context.Context, req *http.Request) (err error) {
+func (dep *client) PrepareSignAsymmetric(ctx context.Context, req *http.Request) (err error) {
 	var body string
 	if req.Body != nil {
 		var bodyBytes []byte
@@ -103,7 +107,7 @@ func (c *client) PrepareSignAsymmetric(ctx context.Context, req *http.Request) (
 
 	message := fmt.Sprintf("%s:%s:%s:%s", req.Method, req.URL.Path, stringToSign, req.Header.Get(X_TIMESTAMP))
 
-	signatureStr, err := c.generateSign(ctx, message)
+	signatureStr, err := dep.generateSign(ctx, message)
 	if err != nil {
 		return
 	}
@@ -114,13 +118,13 @@ func (c *client) PrepareSignAsymmetric(ctx context.Context, req *http.Request) (
 }
 
 // PrepareSignAuth implements Client.
-func (c *client) PrepareSignAuth(ctx context.Context, req *http.Request) (err error) {
+func (dep *client) PrepareSignAuth(ctx context.Context, req *http.Request) (err error) {
 	if req.Header.Get(X_TIMESTAMP) == "" {
 		req.Header.Set(X_TIMESTAMP, fmt.Sprintf("%d", time.Now().Unix()))
 	}
-	message := fmt.Sprintf("%s|%s", c.ClientKey, req.Header.Get(X_TIMESTAMP))
+	message := fmt.Sprintf("%s|%s", dep.ClientKey, req.Header.Get(X_TIMESTAMP))
 
-	signatureStr, err := c.generateSign(ctx, message)
+	signatureStr, err := dep.generateSign(ctx, message)
 	if err != nil {
 		return
 	}
@@ -130,14 +134,14 @@ func (c *client) PrepareSignAuth(ctx context.Context, req *http.Request) (err er
 }
 
 // PrepareHTTPRequest implements Client.
-func (c *client) PrepareHTTPRequest(ctx context.Context, req *http.Request) (err error) {
+func (dep *client) PrepareHTTPRequest(ctx context.Context, req *http.Request) (err error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set(X_CLIENT_KEY, c.ClientKey)
+	req.Header.Set(X_CLIENT_KEY, dep.ClientKey)
 	req.Header.Set(X_IDEMPOTENTCY, uuid.NewString())
 
 	//prepare signature
-	err = c.PrepareSignAsymmetric(ctx, req)
+	err = dep.PrepareSignAsymmetric(ctx, req)
 	if err != nil {
 		return
 	}

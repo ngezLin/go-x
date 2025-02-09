@@ -14,10 +14,7 @@ import (
 
 type (
 	server struct {
-		PublicKey  string
-		Secret     string
-		ClientKey  string
-		SignerType signer.SignerType
+		*ServerOption
 	}
 	Server interface {
 		VerifySignature(ctx context.Context, req *http.Request) (err error)
@@ -25,17 +22,23 @@ type (
 	}
 )
 
-func NewServer(publicKey, secret, clientKey string, signerType signer.SignerType) Server {
+type (
+	ServerOption struct {
+		PublicKey  string
+		Secret     string
+		ClientKey  string
+		SignerType signer.SignerType
+	}
+)
+
+func NewServer(opt *ServerOption) Server {
 	return &server{
-		PublicKey:  publicKey,
-		Secret:     secret,
-		ClientKey:  clientKey,
-		SignerType: signerType,
+		opt,
 	}
 }
 
 // VerifySignature implements Server.
-func (s *server) VerifySignature(ctx context.Context, req *http.Request) (err error) {
+func (dep *server) VerifySignature(ctx context.Context, req *http.Request) (err error) {
 	// 1. Get the signature from the request header
 	signature := req.Header.Get(X_SIGNATURE)
 	// 2. Get the timestamp from the request header
@@ -54,22 +57,22 @@ func (s *server) VerifySignature(ctx context.Context, req *http.Request) (err er
 	// 7. Get the request client key
 	clientKey := req.Header.Get(X_CLIENT_KEY)
 	// 8. Verify the signature
-	if s.SignerType == signer.RSA_PKCS1 {
-		err = s.verifySignatureRSAPKCS1(ctx, signature, timestamp, body, method, path, query, clientKey)
-	} else if s.SignerType == signer.RSA_PSS {
-		err = s.verifySignatureRSAPSS(ctx, signature, timestamp, body, method, path, query, clientKey)
-	} else if s.SignerType == signer.HMAC {
-		err = s.verifySignatureHMAC(ctx, signature, timestamp, body, method, path, query, clientKey)
+	if dep.SignerType == signer.RSA_PKCS1 {
+		err = dep.verifySignatureRSAPKCS1(ctx, signature, timestamp, body, method, path, query, clientKey)
+	} else if dep.SignerType == signer.RSA_PSS {
+		err = dep.verifySignatureRSAPSS(ctx, signature, timestamp, body, method, path, query, clientKey)
+	} else if dep.SignerType == signer.HMAC {
+		err = dep.verifySignatureHMAC(ctx, signature, timestamp, body, method, path, query, clientKey)
 	} else {
 		err = errors.New("signer type not supported")
 	}
 	return
 }
 
-func (s *server) verifySignatureRSAPKCS1(ctx context.Context, signature string, timestamp string, body []byte, method string, path string, query string, clientKey string) (err error) {
+func (dep *server) verifySignatureRSAPKCS1(ctx context.Context, signature string, timestamp string, body []byte, method string, path string, query string, clientKey string) (err error) {
 	message := []byte(timestamp + string(body) + method + path + query + clientKey)
 
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(s.PublicKey)
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(dep.PublicKey)
 	if err != nil {
 		return
 	}
@@ -84,17 +87,17 @@ func (s *server) verifySignatureRSAPKCS1(ctx context.Context, signature string, 
 	return
 }
 
-func (s *server) verifySignatureHMAC(ctx context.Context, signature string, timestamp string, body []byte, method string, path string, query string, clientKey string) (err error) {
+func (dep *server) verifySignatureHMAC(ctx context.Context, signature string, timestamp string, body []byte, method string, path string, query string, clientKey string) (err error) {
 	message := []byte(timestamp + string(body) + method + path + query + clientKey)
-	hmacSigner := signer.NewHMACSigner(s.Secret)
+	hmacSigner := signer.NewHMACSigner(dep.Secret)
 	err = hmacSigner.Verify(message, signature)
 	return
 }
 
-func (s *server) verifySignatureRSAPSS(ctx context.Context, signature string, timestamp string, body []byte, method string, path string, query string, clientKey string) (err error) {
+func (dep *server) verifySignatureRSAPSS(ctx context.Context, signature string, timestamp string, body []byte, method string, path string, query string, clientKey string) (err error) {
 	message := []byte(timestamp + string(body) + method + path + query + clientKey)
 
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(s.PublicKey)
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(dep.PublicKey)
 	if err != nil {
 		return
 	}
@@ -109,7 +112,7 @@ func (s *server) verifySignatureRSAPSS(ctx context.Context, signature string, ti
 	return
 }
 
-func (s *server) readBodyFromRequest(req *http.Request) (body []byte, err error) {
+func (dep *server) readBodyFromRequest(req *http.Request) (body []byte, err error) {
 	if req.Body != nil {
 		var bodyBytes []byte
 		bodyBytes, _ = io.ReadAll(req.Body)
@@ -127,7 +130,7 @@ func (s *server) readBodyFromRequest(req *http.Request) (body []byte, err error)
 }
 
 // VerifySignatureAuth implements Server.
-func (s *server) VerifySignatureAuth(ctx context.Context, req *http.Request) (err error) {
+func (dep *server) VerifySignatureAuth(ctx context.Context, req *http.Request) (err error) {
 	signature := req.Header.Get(X_SIGNATURE)
 	timestamp := req.Header.Get(X_TIMESTAMP)
 
@@ -141,7 +144,7 @@ func (s *server) VerifySignatureAuth(ctx context.Context, req *http.Request) (er
 		return
 	}
 
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(s.PublicKey)
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(dep.PublicKey)
 	if err != nil {
 		return
 	}
@@ -153,19 +156,19 @@ func (s *server) VerifySignatureAuth(ctx context.Context, req *http.Request) (er
 
 	var sign signer.Signer
 
-	switch s.SignerType {
+	switch dep.SignerType {
 	case signer.RSA_PKCS1:
 		sign = signer.NewRSA_PKCS1Signer(nil, rsaPublicKey)
 	case signer.RSA_PSS:
 		sign = signer.NewRSA_PSSSigner(nil, rsaPublicKey)
 	case signer.HMAC:
-		sign = signer.NewHMACSigner(s.Secret)
+		sign = signer.NewHMACSigner(dep.Secret)
 	default:
 		err = errors.New("signer type not supported")
 		return
 	}
 
-	body, err := s.readBodyFromRequest(req)
+	body, err := dep.readBodyFromRequest(req)
 	if err != nil {
 		return
 	}
