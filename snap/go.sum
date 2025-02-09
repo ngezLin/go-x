@@ -1,0 +1,4 @@
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/super-saga/go-x/signer v0.0.0-20250209180003-80a66dbaafce h1:TgPb++TI4o3T4JLX9arOXDoC/h18yLetyYqo/Pran9A=
+github.com/super-saga/go-x/signer v0.0.0-20250209180003-80a66dbaafce/go.mod h1:wyH8DmAzx7AeqA44ieEz4sKv6HahVrfeYlGEklSg+78=
