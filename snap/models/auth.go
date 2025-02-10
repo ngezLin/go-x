@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type (
 	AuthB2BRequest[T any] struct {
 		GrantType      string `json:"grantType"`
@@ -23,13 +25,13 @@ type (
 		AdditionalInfo T      `json:"additionalInfo"`
 	}
 	AuthB2B2CResponse[T any] struct {
-		ResponseCode           string `json:"responseCode"`
-		ResponseMessage        string `json:"responseMessage"`
-		TokenType              string `json:"tokenType"`
-		AccessToken            string `json:"accessToken"`
-		AccessTokenExpiryTime  int64  `json:"accessTokenExpiryTime"`
-		RefreshToken           string `json:"refreshToken"`
-		RefreshTokenExpiryTime int64  `json:"refreshTokenExpiryTime"`
-		AdditionalInfo         T      `json:"additionalInfo"`
+		ResponseCode           string    `json:"responseCode"`
+		ResponseMessage        string    `json:"responseMessage"`
+		TokenType              string    `json:"tokenType"`
+		AccessToken            string    `json:"accessToken"`
+		AccessTokenExpiryTime  time.Time `json:"accessTokenExpiryTime"`
+		RefreshToken           string    `json:"refreshToken"`
+		RefreshTokenExpiryTime time.Time `json:"refreshTokenExpiryTime"`
+		AdditionalInfo         T         `json:"additionalInfo"`
 	}
 )
