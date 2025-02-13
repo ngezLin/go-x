@@ -70,3 +70,17 @@ func GetPid(ctx context.Context) string {
 	}
 	return ""
 }
+
+func GetIdempotency(ctx context.Context) string {
+	if v, ok := ctx.Value(idempotencyKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
+func GetUserDevice(ctx context.Context) string {
+	if v, ok := ctx.Value(userDeviceKey{}).(string); ok {
+		return v
+	}
+	return ""
+}

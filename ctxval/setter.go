@@ -61,3 +61,15 @@ func SetPid(v string) Set {
 		return context.WithValue(ctx, pidKey{}, v)
 	}
 }
+
+func SetIdempotency(v string) Set {
+	return func(ctx context.Context) context.Context {
+		return context.WithValue(ctx, idempotencyKey{}, v)
+	}
+}
+
+func SetUserDevice(v string) Set {
+	return func(ctx context.Context) context.Context {
+		return context.WithValue(ctx, userDeviceKey{}, v)
+	}
+}

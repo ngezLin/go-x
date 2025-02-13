@@ -54,7 +54,7 @@ const (
 	SERVICE_CODE_TRANSFER_VA_UPDATE                   = "28"
 	SERVICE_CODE_TRANSFER_VA_UPDATE_STATUS            = "29"
 	SERVICE_CODE_TRANSFER_VA_INQUIRY_VA               = "30"
-	SERVICE_CODE_TRANSFER_VA_DELETE                   = "31"
+	SERVICE_CODE_TRANSFER_VA_DELETE_VA                = "31"
 	SERVICE_CODE_TRANSFER_VA_INQUIRY_INTRABANK        = "32"
 	SERVICE_CODE_TRANSFER_VA_PAYMENT_INTRABANK        = "33"
 	SERVICE_CODE_TRANSFER_VA_NOTIFY_PAYMENT_INTRABANK = "34"
@@ -91,6 +91,34 @@ const (
 	SERVICE_CODE_QR_MPM_CANCEL   = "77"
 	SERVICE_CODE_QR_MPM_REFUND   = "78"
 	SERVICE_CODE_QR_MPM_STATUS   = "53"
+
+	// Debit [AIS Non Bank] - Debit Payment Service Codes
+	SERVICE_CODE_DEBIT_PAYMENT_HOST_TO_HOST = "54"
+	SERVICE_CODE_DEBIT_STATUS               = "55"
+	SERVICE_CODE_DEBIT_NOTIFY               = "56"
+	SERVICE_CODE_DEBIT_CANCEL               = "57"
+	SERVICE_CODE_DEBIT_REFUND               = "58"
+
+	// Debit QR-CPM Service Codes
+	SERVICE_CODE_QR_CPM_GENERATE = "59"
+	SERVICE_CODE_QR_CPM_PAYMENT  = "60"
+	SERVICE_CODE_QR_CPM_QUERY    = "61"
+	SERVICE_CODE_QR_CPM_CANCEL   = "62"
+	SERVICE_CODE_QR_CPM_NOTIFY   = "79"
+	SERVICE_CODE_QR_CPM_REFUND   = "80"
+
+	// Debit Auth Payment Service Codes
+	SERVICE_CODE_DEBIT_AUTH_PAYMENT        = "63"
+	SERVICE_CODE_DEBIT_AUTH_QUERY          = "64"
+	SERVICE_CODE_DEBIT_AUTH_CAPTURE        = "65"
+	SERVICE_CODE_DEBIT_AUTH_CAPTURE_INQURY = "66"
+	SERVICE_CODE_DEBIT_AUTH_VOID           = "67"
+	SERVICE_CODE_DEBIT_AUTH_VOID_INQURY    = "68"
+	SERVICE_CODE_DEBIT_AUTH_REFUND         = "69"
+	// Debit BI-FAST Service Codes
+	SERVICE_CODE_DEBIT_BI_FAST_EMANDATE = "70"
+	SERVICE_CODE_DEBIT_BI_FAST_PAYMENT  = "71"
+	SERVICE_CODE_DEBIT_BI_FAST_NOTIFY   = "72"
 )
 
 // Endpoint Constants
@@ -143,11 +171,11 @@ const (
 	ENDPOINT_TRANSFER_VA_INQUIRY                  = "/transfer-va/inquiry"
 	ENDPOINT_TRANSFER_VA_PAYMENT                  = "/transfer-va/payment"
 	ENDPOINT_TRANSFER_VA_STATUS                   = "/transfer-va/status"
-	ENDPOINT_TRANSFER_VA_CREATE                   = "/transfer-va/create-va"
-	ENDPOINT_TRANSFER_VA_UPDATE                   = "/transfer-va/update-va"
+	ENDPOINT_TRANSFER_VA_CREATE_VA                = "/transfer-va/create-va"
+	ENDPOINT_TRANSFER_VA_UPDATE_VA                = "/transfer-va/update-va"
 	ENDPOINT_TRANSFER_VA_UPDATE_STATUS            = "/transfer-va/update-status"
 	ENDPOINT_TRANSFER_VA_INQUIRY_VA               = "/transfer-va/inquiry-va"
-	ENDPOINT_TRANSFER_VA_DELETE                   = "/transfer-va/delete-va"
+	ENDPOINT_TRANSFER_VA_DELETE_VA                = "/transfer-va/delete-va"
 	ENDPOINT_TRANSFER_VA_INQUIRY_INTRABANK        = "/transfer-va/inquiry-intrabank"
 	ENDPOINT_TRANSFER_VA_PAYMENT_INTRABANK        = "/transfer-va/payment-intrabank"
 	ENDPOINT_TRANSFER_VA_NOTIFY_PAYMENT_INTRABANK = "/transfer-va/notify-payment-intrabank"
@@ -184,4 +212,33 @@ const (
 	ENDPOINT_QR_MPM_CANCEL   = "/qr/qr-mpm-cancel"
 	ENDPOINT_QR_MPM_REFUND   = "/qr/qr-mpm-refund"
 	ENDPOINT_QR_MPM_STATUS   = "/qr/qr-mpm-status"
+
+	// Debit Payment Endpoints
+	ENDPOINT_DEBIT_PAYMENT_HOST_TO_HOST = "/debit/payment-host-to-host"
+	ENDPOINT_DEBIT_STATUS               = "/debit/status"
+	ENDPOINT_DEBIT_NOTIFY               = "/debit/notify"
+	ENDPOINT_DEBIT_CANCEL               = "/debit/cancel"
+	ENDPOINT_DEBIT_REFUND               = "/debit/refund"
+
+	// Debit QR-CPM Endpoints
+	ENDPOINT_QR_CPM_GENERATE = "/qr/qr-cpm-generate"
+	ENDPOINT_QR_CPM_PAYMENT  = "/qr/qr-cpm-payment"
+	ENDPOINT_QR_CPM_QUERY    = "/qr/qr-cpm-query"
+	ENDPOINT_QR_CPM_CANCEL   = "/qr/qr-cpm-cancel"
+	ENDPOINT_QR_CPM_NOTIFY   = "/qr/qr-cpm-notify"
+	ENDPOINT_QR_CPM_REFUND   = "/qr/qr-cpm-refund"
+
+	// Debit Auth Payment Endpoints
+	ENDPOINT_DEBIT_AUTH_PAYMENT        = "/auth/payment"
+	ENDPOINT_DEBIT_AUTH_QUERY          = "/auth/query"
+	ENDPOINT_DEBIT_AUTH_CAPTURE        = "/auth/capture"
+	ENDPOINT_DEBIT_AUTH_CAPTURE_INQURY = "/auth/capture-query"
+	ENDPOINT_DEBIT_AUTH_VOID           = "/auth/void"
+	ENDPOINT_DEBIT_AUTH_VOID_INQURY    = "/auth/void-query"
+	ENDPOINT_DEBIT_AUTH_REFUND         = "/auth/refund"
+
+	// Debit BI-FAST Endpoints
+	ENDPOINT_DEBIT_BI_FAST_EMANDATE = "/debit/fast-emandate"
+	ENDPOINT_DEBIT_BI_FAST_PAYMENT  = "/debit/fast-payment"
+	ENDPOINT_DEBIT_BI_FAST_NOTIFY   = "/debit/fast-notify"
 )

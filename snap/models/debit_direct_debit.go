@@ -15,7 +15,7 @@ type (
 		Amount             Amount               `json:"amount"`
 		UrlParam           []UrlParam           `json:"urlParam"`
 		ExternalStoreId    string               `json:"externalStoreId"`
-		ValidUpTo          time.Time            `json:"validUpTo"`
+		ValidUpTo          string               `json:"validUpTo"`
 		PointOfInitiation  string               `json:"pointOfInitiation"`
 		FeeType            string               `json:"feeType"`
 		DisabledPayMethods string               `json:"disabledPayMethods"`

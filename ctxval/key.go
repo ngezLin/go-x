@@ -6,8 +6,10 @@ type (
 	traceIDKey       struct{}
 	spanIDKey        struct{}
 	traceSampledKey  struct{}
+	idempotencyKey   struct{}
 
 	userAgentKey    struct{}
+	userDeviceKey   struct{}
 	hostKey         struct{}
 	ipKey           struct{}
 	forwardedForKey struct{}

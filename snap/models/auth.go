@@ -2,6 +2,12 @@ package models
 
 import "time"
 
+const (
+	GrantTypeClientCredentials = "client_credentials"
+	GrantTypeAuthorizationCode = "authorization_code"
+	GrantTypeRefreshToken      = "refresh_token"
+)
+
 type (
 	AuthB2BRequest[T any] struct {
 		GrantType      string `json:"grantType"`

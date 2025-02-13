@@ -138,7 +138,7 @@ func (dep *client) PrepareHTTPRequest(ctx context.Context, req *http.Request) (e
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set(X_CLIENT_KEY, dep.ClientKey)
-	req.Header.Set(X_IDEMPOTENTCY, uuid.NewString())
+	req.Header.Set(X_IDEMPOTENCY, uuid.NewString())
 
 	//prepare signature
 	err = dep.PrepareSignAsymmetric(ctx, req)
